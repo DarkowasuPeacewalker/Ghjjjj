@@ -1,9 +1,7 @@
-Contributing
-============
+# Contributing
 
-See [Contributing](https://github.com/dotnet/corefx/blob/master/Documentation/project-docs/contributing.md) for information about coding styles, source structure, making pull requests, and more.
+See [Contributing](https://github.com/dotnet/runtime/blob/main/CONTRIBUTING.md) for information about coding styles, source structure, making pull requests, and more.
 
-Developers
-==========
+## Repositories
 
-If you are looking to contribute to the verbs that ship with the SDK, please go to the [CLI Repo](https://github.com/dotnet/cli).
+See the [.NET Repos](Documentation/core-repos.md) to find a repo to contribute to.
