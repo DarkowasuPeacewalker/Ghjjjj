@@ -5,9 +5,21 @@ public class GemCollectible : MonoBehaviour
 {
     private bool collected;
 
+    private void OnValidate()
+    {
+        Collider2D trigger = GetComponent<Collider2D>();
+        if (trigger != null)
+        {
+            trigger.isTrigger = true;
+        }
+    }
+
     private void Start()
     {
-        GameManager.Instance.RegisterGemTotal();
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.RegisterGemTotal();
+        }
     }
 
     private void OnTriggerEnter2D(Collider2D other)
@@ -17,13 +29,16 @@ public class GemCollectible : MonoBehaviour
             return;
         }
 
-        if (other.GetComponent<PlayerController2D>() == null)
+        if (!other.TryGetComponent(out PlayerController2D _))
         {
             return;
         }
 
         collected = true;
-        GameManager.Instance.RegisterGem();
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.RegisterGem();
+        }
         Destroy(gameObject);
     }
 }

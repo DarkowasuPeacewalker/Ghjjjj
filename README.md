@@ -51,4 +51,19 @@
 2. `File -> Build Settings` -> добавь сцены.
 3. Выбери платформу (например, Windows) и нажми `Build`.
 
-Если хочешь, в следующем шаге сделаю Editor Build Script под `BuildPipeline.BuildPlayer` (одной кнопкой/одной командой).
+### Автосборка через CLI (batchmode)
+Добавлен скрипт `Assets/Editor/BuildScript.cs` с методами:
+- `BuildScript.BuildWindows`
+- `BuildScript.BuildLinux`
+
+Пример запуска (Windows билд):
+```bash
+Unity -batchmode -quit -projectPath "<путь_к_проекту>" -executeMethod BuildScript.BuildWindows -logFile -
+```
+
+Пример запуска (Linux билд):
+```bash
+Unity -batchmode -quit -projectPath "<путь_к_проекту>" -executeMethod BuildScript.BuildLinux -logFile -
+```
+
+Готовые файлы попадают в `Builds/<Target>/`.

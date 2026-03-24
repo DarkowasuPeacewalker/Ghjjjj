@@ -26,6 +26,15 @@ public class PatrolEnemy : MonoBehaviour, IDamageable
         }
     }
 
+    private void OnValidate()
+    {
+        Collider2D trigger = GetComponent<Collider2D>();
+        if (trigger != null)
+        {
+            trigger.isTrigger = true;
+        }
+    }
+
     private void Start()
     {
         startPosition = transform.position;
@@ -47,8 +56,7 @@ public class PatrolEnemy : MonoBehaviour, IDamageable
 
     private void OnTriggerEnter2D(Collider2D other)
     {
-        var player = other.GetComponent<PlayerController2D>();
-        if (player != null)
+        if (other.TryGetComponent(out PlayerController2D player))
         {
             player.ApplyDamageFromEnemy(this);
         }

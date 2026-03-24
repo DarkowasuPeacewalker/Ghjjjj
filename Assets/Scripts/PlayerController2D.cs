@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 [RequireComponent(typeof(Rigidbody2D))]
@@ -73,7 +74,10 @@ public class PlayerController2D : MonoBehaviour
 
         if (transform.position.y < -20f)
         {
-            GameManager.Instance.RespawnPlayer();
+            if (GameManager.Instance != null)
+            {
+                GameManager.Instance.RespawnPlayer();
+            }
         }
     }
 
@@ -88,7 +92,10 @@ public class PlayerController2D : MonoBehaviour
         Vector2 knockback = new(enemy.transform.position.x > transform.position.x ? -6f : 6f, 6f);
         rb.velocity = knockback;
 
-        GameManager.Instance.DamagePlayer(enemy.ContactDamage, $"Враг нанес {enemy.ContactDamage} урона!");
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.DamagePlayer(enemy.ContactDamage, $"Враг нанес {enemy.ContactDamage} урона!");
+        }
     }
 
     public void DisableControl()
@@ -140,21 +147,30 @@ public class PlayerController2D : MonoBehaviour
         {
             weakTimer = weakCooldown;
             DoMeleeAttack(weakRange, weakDamage, new Color(0.6f, 1f, 0.7f));
-            GameManager.Instance.SetMessage("Слабая атака!");
+            if (GameManager.Instance != null)
+            {
+                GameManager.Instance.SetMessage("Слабая атака!");
+            }
         }
 
         if (Input.GetMouseButtonDown(1) && strongTimer <= 0f)
         {
             strongTimer = strongCooldown;
             DoMeleeAttack(strongRange, strongDamage, new Color(1f, 0.6f, 0.25f));
-            GameManager.Instance.SetMessage("Сильная атака!");
+            if (GameManager.Instance != null)
+            {
+                GameManager.Instance.SetMessage("Сильная атака!");
+            }
         }
 
         if (Input.GetKeyDown(KeyCode.Q) && rangedTimer <= 0f)
         {
             rangedTimer = rangedCooldown;
             FireProjectile();
-            GameManager.Instance.SetMessage("Дальняя атака!");
+            if (GameManager.Instance != null)
+            {
+                GameManager.Instance.SetMessage("Дальняя атака!");
+            }
         }
     }
 
@@ -162,11 +178,11 @@ public class PlayerController2D : MonoBehaviour
     {
         Vector2 origin = (attackPoint != null ? (Vector2)attackPoint.position : (Vector2)transform.position) + Vector2.right * facing * (range * 0.5f);
         Collider2D[] hits = Physics2D.OverlapCircleAll(origin, range, enemyMask);
+        HashSet<IDamageable> uniqueTargets = new();
 
         foreach (Collider2D hit in hits)
         {
-            IDamageable target = hit.GetComponent<IDamageable>();
-            if (target != null)
+            if (hit.TryGetComponent(out IDamageable target) && uniqueTargets.Add(target))
             {
                 target.ReceiveDamage(damage);
             }
@@ -217,9 +233,9 @@ public class PlayerController2D : MonoBehaviour
 
     private void TickCooldowns()
     {
-        weakTimer -= Time.deltaTime;
-        strongTimer -= Time.deltaTime;
-        rangedTimer -= Time.deltaTime;
+        weakTimer = Mathf.Max(0f, weakTimer - Time.deltaTime);
+        strongTimer = Mathf.Max(0f, strongTimer - Time.deltaTime);
+        rangedTimer = Mathf.Max(0f, rangedTimer - Time.deltaTime);
     }
 
     private bool IsGrounded()

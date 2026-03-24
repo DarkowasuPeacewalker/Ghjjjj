@@ -24,6 +24,15 @@ public class Projectile : MonoBehaviour
         Destroy(gameObject, lifetime);
     }
 
+    private void OnValidate()
+    {
+        Collider2D trigger = GetComponent<Collider2D>();
+        if (trigger != null)
+        {
+            trigger.isTrigger = true;
+        }
+    }
+
     public void Launch(Vector2 direction, int projectileDamage)
     {
         damage = projectileDamage;
@@ -32,8 +41,7 @@ public class Projectile : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D other)
     {
-        IDamageable target = other.GetComponent<IDamageable>();
-        if (target != null)
+        if (other.TryGetComponent(out IDamageable target))
         {
             target.ReceiveDamage(damage);
             Destroy(gameObject);

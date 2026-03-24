@@ -88,7 +88,10 @@ public class GameManager : MonoBehaviour
         {
             runEnded = true;
             SetMessage("Поражение. Нажми R для перезапуска забега.");
-            player.DisableControl();
+            if (player != null)
+            {
+                player.DisableControl();
+            }
         }
     }
 
@@ -99,8 +102,11 @@ public class GameManager : MonoBehaviour
             return;
         }
 
-        player.transform.position = spawnPoint.position;
-        player.ResetVelocity();
+        if (player != null)
+        {
+            player.transform.position = spawnPoint.position;
+            player.ResetVelocity();
+        }
         DamagePlayer(1, "Падение в бездну! -1 HP.");
     }
 
@@ -116,7 +122,10 @@ public class GameManager : MonoBehaviour
         {
             runEnded = true;
             SetMessage("Победа! Ты сбежал из подземелий Назарика. Нажми R для нового забега.");
-            player.DisableControl();
+            if (player != null)
+            {
+                player.DisableControl();
+            }
             return;
         }
 
