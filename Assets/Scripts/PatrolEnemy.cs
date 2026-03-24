@@ -1,16 +1,30 @@
 using UnityEngine;
 
 [RequireComponent(typeof(Collider2D))]
-public class PatrolEnemy : MonoBehaviour
+public class PatrolEnemy : MonoBehaviour, IDamageable
 {
     [SerializeField] private float speed = 2f;
     [SerializeField] private float patrolDistance = 3f;
-    [SerializeField] private int damage = 1;
+    [SerializeField] private int contactDamage = 1;
+    [SerializeField] private int maxHp = 6;
+    [SerializeField] private Color aliveColor = new(0.95f, 0.45f, 0.55f);
 
     private Vector3 startPosition;
     private float direction = 1f;
+    private int hp;
+    private SpriteRenderer spriteRenderer;
 
-    public int Damage => damage;
+    public int ContactDamage => contactDamage;
+
+    private void Awake()
+    {
+        hp = maxHp;
+        spriteRenderer = GetComponent<SpriteRenderer>();
+        if (spriteRenderer != null)
+        {
+            spriteRenderer.color = aliveColor;
+        }
+    }
 
     private void Start()
     {
@@ -24,6 +38,11 @@ public class PatrolEnemy : MonoBehaviour
         {
             direction *= -1f;
         }
+
+        if (spriteRenderer != null)
+        {
+            spriteRenderer.flipX = direction < 0f;
+        }
     }
 
     private void OnTriggerEnter2D(Collider2D other)
@@ -32,6 +51,21 @@ public class PatrolEnemy : MonoBehaviour
         if (player != null)
         {
             player.ApplyDamageFromEnemy(this);
+        }
+    }
+
+    public void ReceiveDamage(int amount)
+    {
+        hp -= amount;
+        if (hp <= 0)
+        {
+            Destroy(gameObject);
+            return;
+        }
+
+        if (spriteRenderer != null)
+        {
+            spriteRenderer.color = Color.Lerp(Color.white, aliveColor, Mathf.Clamp01((float)hp / maxHp));
         }
     }
 }

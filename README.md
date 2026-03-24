@@ -1,33 +1,54 @@
-# Nazarick Escape (Unity 2D)
+# Nazarick Escape (Unity 2D) — готово к сборке
 
-Ниже — версия платформера **для Unity** (URP не обязателен), а не веб-канвас.
+Сделал Unity-версию с **примитивной визуализацией** (цветные спрайты/коллайдеры), базовым платформингом и тремя типами атак.
 
-## Что реализовано
-- 2D-платформер с управлением `A/D` (или стрелки), прыжком (`Space/W/Up`), рывком (`Shift`), рестартом (`R`).
-- HP, i-frames после урона, смерть и респавн.
-- Сбор рун (collectibles), выход через портал только после сбора всех рун.
-- Переход между уровнями и экран победы.
-- Патрулирующие враги с уроном.
-- Простая камера, следующая за игроком.
+## Что есть сейчас
+- Платформер: бег, прыжок, двойной прыжок, рывок.
+- Боевая система:
+  - **Слабая атака** (ЛКМ) — быстрый ближний удар.
+  - **Сильная атака** (ПКМ) — медленнее, но выше урон и радиус.
+  - **Дальняя атака** (`Q`) — снаряд.
+- Враги с HP (их можно убивать), контактный урон по игроку.
+- Сбор рун и выход в портал только после сбора всех.
+- GameManager с HP/сообщениями/рестартом (`R`).
 
-## Быстрый старт в Unity (2022.3+)
-1. Создай 2D проект.
-2. Скопируй папку `Assets/Scripts` в проект.
-3. Создай сцену `Level1`.
-4. Добавь объекты:
-   - `GameManager` (пустой объект) + компонент `GameManager`.
-   - `Player` (Sprite + `Rigidbody2D` + `CapsuleCollider2D` + `PlayerController2D`).
-   - `GroundCheck` как дочерний объект игрока под ногами.
-   - `Camera` + `CameraFollow2D`.
-   - Платформы с `BoxCollider2D` и слоем `Ground`.
-   - Руны: любой спрайт + `CircleCollider2D` (`Is Trigger`) + `GemCollectible`.
-   - Враги: спрайт + `BoxCollider2D` (`Is Trigger`) + `PatrolEnemy`.
-   - Портал: спрайт + `BoxCollider2D` (`Is Trigger`) + `LevelExit`.
-5. В `GameManager` укажи:
-   - `Player`, `Spawn Point`, `Message Label` (TMP), `HP Label` (TMP), `Gems Label` (TMP).
-   - `Level Scene Names`: `Level1`, `Level2`.
-6. Для `Level2` создай вторую сцену и добавь её в Build Settings.
+## Быстрый запуск в Unity 2022.3+
+1. Создай 2D проект Unity.
+2. Скопируй `Assets/Scripts`.
+3. На сцене добавь:
+   - `GameManager` + компонент `GameManager`.
+   - `Player`:
+     - `SpriteRenderer` (любой квадратный спрайт),
+     - `Rigidbody2D` (Dynamic),
+     - `CapsuleCollider2D`,
+     - `PlayerController2D`.
+   - `GroundCheck` (дочерний объект Player, чуть ниже ног).
+   - `Main Camera` + `CameraFollow2D`.
+   - Землю/платформы с `BoxCollider2D` на слое `Ground`.
+   - Врагов с `SpriteRenderer`, `BoxCollider2D (IsTrigger)`, `PatrolEnemy`.
+   - Руны с `SpriteRenderer`, `CircleCollider2D (IsTrigger)`, `GemCollectible`.
+   - Портал с `SpriteRenderer`, `BoxCollider2D (IsTrigger)`, `LevelExit`.
+4. Для дальней атаки создай prefab снаряда:
+   - `Projectile` объект: `SpriteRenderer`, `Rigidbody2D` (Gravity Scale 0), `CircleCollider2D (IsTrigger)`, `Projectile`.
+   - Назначь prefab в `PlayerController2D.projectilePrefab`.
+5. Для визуала удара создай prefab эффекта:
+   - объект со `SpriteRenderer` (квадрат/круг),
+   - назначь в `PlayerController2D.hitEffectPrefab`.
+6. В `GameManager` назначь `player`, `spawnPoint`, список сцен (`Level1`, `Level2` при необходимости).
 
-## Примечания
-- Для UI используется TextMeshPro (`TMP_Text`).
-- Можно расширить до metroidvania: способности через ScriptableObject, карту зон, сохранения.
+## Управление
+- `A/D` или стрелки — движение.
+- `Space/W/↑` — прыжок.
+- `Shift` — рывок.
+- `ЛКМ` — слабая атака.
+- `ПКМ` — сильная атака.
+- `Q` — дальняя атака.
+- `R` — перезапуск забега.
+
+## Сборка (когда Unity установлен локально)
+В этом контейнере Unity не установлен, поэтому бинарник (`.exe`) здесь собрать нельзя. Локально можно собрать так:
+1. Открой проект в Unity.
+2. `File -> Build Settings` -> добавь сцены.
+3. Выбери платформу (например, Windows) и нажми `Build`.
+
+Если хочешь, в следующем шаге сделаю Editor Build Script под `BuildPipeline.BuildPlayer` (одной кнопкой/одной командой).
