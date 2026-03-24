@@ -35,15 +35,31 @@ public class GameManager : MonoBehaviour
         }
 
         Instance = this;
+        DontDestroyOnLoad(gameObject);
         hp = maxHp;
+        SceneManager.sceneLoaded += OnSceneLoaded;
     }
 
     private void Start()
     {
-        currentLevelIndex = Mathf.Max(0, levelSceneNames.IndexOf(SceneManager.GetActiveScene().name));
+        SyncCurrentLevelIndex();
+        ResolveSceneReferences();
         RecountGems();
         RefreshUI();
-        SetMessage("Собери все руны и доберись до портала.");
+
+        if (string.IsNullOrWhiteSpace(messageLabel != null ? messageLabel.text : null))
+        {
+            SetMessage("Собери все руны и доберись до портала.");
+        }
+    }
+
+    private void OnDestroy()
+    {
+        if (Instance == this)
+        {
+            SceneManager.sceneLoaded -= OnSceneLoaded;
+            Instance = null;
+        }
     }
 
     private void Update()
@@ -56,14 +72,13 @@ public class GameManager : MonoBehaviour
 
     public void RegisterGem()
     {
-        gemsCollected++;
-        SetMessage("Руна поглощена. Энергия портала растёт.");
-        RefreshUI();
-    }
+        if (runEnded)
+        {
+            return;
+        }
 
-    public void RegisterGemTotal()
-    {
-        gemsTotal++;
+        gemsCollected = Mathf.Min(gemsCollected + 1, gemsTotal);
+        SetMessage("Руна поглощена. Энергия портала растёт.");
         RefreshUI();
     }
 
@@ -97,21 +112,23 @@ public class GameManager : MonoBehaviour
 
     public void RespawnPlayer()
     {
-        if (spawnPoint == null)
+        if (runEnded || player == null || spawnPoint == null)
         {
             return;
         }
 
-        if (player != null)
-        {
-            player.transform.position = spawnPoint.position;
-            player.ResetVelocity();
-        }
+        player.transform.position = spawnPoint.position;
+        player.ResetVelocity();
         DamagePlayer(1, "Падение в бездну! -1 HP.");
     }
 
     public void ReachExit()
     {
+        if (runEnded)
+        {
+            return;
+        }
+
         if (!AreAllGemsCollected())
         {
             SetMessage("Портал заперт. Нужны все руны.");
@@ -126,6 +143,7 @@ public class GameManager : MonoBehaviour
             {
                 player.DisableControl();
             }
+
             return;
         }
 
@@ -139,25 +157,84 @@ public class GameManager : MonoBehaviour
         hp = maxHp;
         gemsCollected = 0;
         gemsTotal = 0;
-        currentLevelIndex = 0;
 
         if (levelSceneNames.Count > 0)
         {
+            currentLevelIndex = 0;
             SceneManager.LoadScene(levelSceneNames[0]);
+            return;
         }
-        else
+
+        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+    }
+
+    private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        SyncCurrentLevelIndex();
+        ResolveSceneReferences();
+        RecountGems();
+        RefreshUI();
+    }
+
+    private void SyncCurrentLevelIndex()
+    {
+        int index = levelSceneNames.IndexOf(SceneManager.GetActiveScene().name);
+        currentLevelIndex = Mathf.Max(0, index);
+    }
+
+    private void ResolveSceneReferences()
+    {
+        if (player == null)
         {
-            SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+            player = FindObjectOfType<PlayerController2D>();
+        }
+
+        if (spawnPoint == null)
+        {
+            GameObject spawn = GameObject.FindGameObjectWithTag("Respawn");
+            if (spawn != null)
+            {
+                spawnPoint = spawn.transform;
+            }
+        }
+
+        if (hpLabel == null)
+        {
+            GameObject hpObj = GameObject.Find("HPLabel");
+            if (hpObj != null)
+            {
+                hpLabel = hpObj.GetComponent<TMP_Text>();
+            }
+        }
+
+        if (gemsLabel == null)
+        {
+            GameObject gemsObj = GameObject.Find("GemsLabel");
+            if (gemsObj != null)
+            {
+                gemsLabel = gemsObj.GetComponent<TMP_Text>();
+            }
+        }
+
+        if (messageLabel == null)
+        {
+            GameObject messageObj = GameObject.Find("MessageLabel");
+            if (messageObj != null)
+            {
+                messageLabel = messageObj.GetComponent<TMP_Text>();
+            }
+        }
+
+        if (player != null)
+        {
+            player.EnableControl();
         }
     }
 
     private void RecountGems()
     {
         gemsCollected = 0;
-        gemsTotal = 0;
-
-        var gems = FindObjectsOfType<GemCollectible>();
-        gemsTotal = gems.Length;
+        gemsTotal = FindObjectsOfType<GemCollectible>().Length;
     }
 
     private void RefreshUI()

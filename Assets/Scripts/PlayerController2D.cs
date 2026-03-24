@@ -40,6 +40,7 @@ public class PlayerController2D : MonoBehaviour
     private bool controlsEnabled = true;
     private float invulnerabilityTimer;
     private float facing = 1f;
+    private float baseScaleX = 1f;
 
     private float weakTimer;
     private float strongTimer;
@@ -48,6 +49,31 @@ public class PlayerController2D : MonoBehaviour
     private void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
+        baseScaleX = Mathf.Max(0.01f, Mathf.Abs(transform.localScale.x));
+    }
+
+    private void OnValidate()
+    {
+        maxJumps = Mathf.Max(1, maxJumps);
+        maxDashCharges = Mathf.Max(0, maxDashCharges);
+        moveSpeed = Mathf.Max(0f, moveSpeed);
+        jumpForce = Mathf.Max(0f, jumpForce);
+        dashForce = Mathf.Max(0f, dashForce);
+
+        weakCooldown = Mathf.Max(0f, weakCooldown);
+        strongCooldown = Mathf.Max(0f, strongCooldown);
+        rangedCooldown = Mathf.Max(0f, rangedCooldown);
+
+        weakRange = Mathf.Max(0.1f, weakRange);
+        strongRange = Mathf.Max(0.1f, strongRange);
+        weakDamage = Mathf.Max(1, weakDamage);
+        strongDamage = Mathf.Max(1, strongDamage);
+        rangedDamage = Mathf.Max(1, rangedDamage);
+
+        if (attackPoint == null)
+        {
+            attackPoint = transform;
+        }
     }
 
     private void Start()
@@ -58,12 +84,13 @@ public class PlayerController2D : MonoBehaviour
 
     private void Update()
     {
+        TickCooldowns();
+
         if (!controlsEnabled)
         {
             return;
         }
 
-        TickCooldowns();
         HandleMovement();
         HandleAttacks();
 
@@ -83,7 +110,7 @@ public class PlayerController2D : MonoBehaviour
 
     public void ApplyDamageFromEnemy(PatrolEnemy enemy)
     {
-        if (invulnerabilityTimer > 0f)
+        if (enemy == null || invulnerabilityTimer > 0f)
         {
             return;
         }
@@ -102,6 +129,17 @@ public class PlayerController2D : MonoBehaviour
     {
         controlsEnabled = false;
         rb.velocity = Vector2.zero;
+    }
+
+    public void EnableControl()
+    {
+        controlsEnabled = true;
+        jumpsLeft = maxJumps;
+        dashCharges = maxDashCharges;
+        invulnerabilityTimer = 0f;
+        weakTimer = 0f;
+        strongTimer = 0f;
+        rangedTimer = 0f;
     }
 
     public void ResetVelocity()
@@ -137,7 +175,7 @@ public class PlayerController2D : MonoBehaviour
         if (!Mathf.Approximately(move, 0f))
         {
             facing = Mathf.Sign(move);
-            transform.localScale = new Vector3(facing, 1f, 1f);
+            transform.localScale = new Vector3(baseScaleX * facing, transform.localScale.y, transform.localScale.z);
         }
     }
 
@@ -147,37 +185,28 @@ public class PlayerController2D : MonoBehaviour
         {
             weakTimer = weakCooldown;
             DoMeleeAttack(weakRange, weakDamage, new Color(0.6f, 1f, 0.7f));
-            if (GameManager.Instance != null)
-            {
-                GameManager.Instance.SetMessage("Слабая атака!");
-            }
+            GameManager.Instance?.SetMessage("Слабая атака!");
         }
 
         if (Input.GetMouseButtonDown(1) && strongTimer <= 0f)
         {
             strongTimer = strongCooldown;
             DoMeleeAttack(strongRange, strongDamage, new Color(1f, 0.6f, 0.25f));
-            if (GameManager.Instance != null)
-            {
-                GameManager.Instance.SetMessage("Сильная атака!");
-            }
+            GameManager.Instance?.SetMessage("Сильная атака!");
         }
 
         if (Input.GetKeyDown(KeyCode.Q) && rangedTimer <= 0f)
         {
             rangedTimer = rangedCooldown;
             FireProjectile();
-            if (GameManager.Instance != null)
-            {
-                GameManager.Instance.SetMessage("Дальняя атака!");
-            }
+            GameManager.Instance?.SetMessage("Дальняя атака!");
         }
     }
 
     private void DoMeleeAttack(float range, int damage, Color color)
     {
-        Vector2 origin = (attackPoint != null ? (Vector2)attackPoint.position : (Vector2)transform.position) + Vector2.right * facing * (range * 0.5f);
-        Collider2D[] hits = Physics2D.OverlapCircleAll(origin, range, enemyMask);
+        Vector2 attackCenter = (attackPoint != null ? (Vector2)attackPoint.position : (Vector2)transform.position) + Vector2.right * facing * (range * 0.5f);
+        Collider2D[] hits = Physics2D.OverlapCircleAll(attackCenter, range, enemyMask);
         HashSet<IDamageable> uniqueTargets = new();
 
         foreach (Collider2D hit in hits)
@@ -188,7 +217,7 @@ public class PlayerController2D : MonoBehaviour
             }
         }
 
-        SpawnHitEffect(origin, range, color);
+        SpawnHitEffect(attackCenter, range, color);
     }
 
     private void FireProjectile()

@@ -14,14 +14,6 @@ public class GemCollectible : MonoBehaviour
         }
     }
 
-    private void Start()
-    {
-        if (GameManager.Instance != null)
-        {
-            GameManager.Instance.RegisterGemTotal();
-        }
-    }
-
     private void OnTriggerEnter2D(Collider2D other)
     {
         if (collected)
@@ -39,6 +31,7 @@ public class GemCollectible : MonoBehaviour
         {
             GameManager.Instance.RegisterGem();
         }
+
         Destroy(gameObject);
     }
 }
